@@ -4,7 +4,7 @@ Technologies Used
 - Node.js
 - MySQL
 - npm
-- handelbars.js
+- handlebars.js
 
 Mock Up
 ![](images/mockup.png)
