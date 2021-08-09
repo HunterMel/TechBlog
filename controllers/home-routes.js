@@ -1,20 +1,42 @@
-const Sequelize = require('sequelize');
+const router = require('express').Router();
+const sequelize = require('../config/connection');
+const { Post, User, Comment, Vote } = require('../models');
 
-require('dotenv').config();
-//create connection to our database, pass in MySQL information for username and password
+// get all posts for homepage
+router.get('/', (req, res) => {
+  console.log('======================');
+  Post.findAll({
+    attributes: [
+      'id',
+      'post_url',
+      'title',
+      'created_at',
+      [sequelize.literal('(SELECT COUNT(*) FROM vote WHERE post.id = vote.post_id)'), 'vote_count']
+    ],
+    include: [
+      {
+        model: Comment,
+        attributes: ['id', 'comment_text', 'post_id', 'user_id', 'created_at'],
+        include: {
+          model: User,
+          attributes: ['username']
+        }
+      },
+      {
+        model: User,
+        attributes: ['username']
+      }
+    ]
+  })
+    .then(dbPostData => {
+      const posts = dbPostData.map(post => post.get({ plain: true }));
 
-let sequelize;
+      res.render('homepage', { posts });
+    })
+    .catch(err => {
+      console.log(err);
+      res.status(500).json(err);
+    });
+});
 
-//gotten from 13.5.6- to connect the the jawsdb deployment
-if (process.env.JAWSDB_URL) {
-  sequelize = new Sequelize(process.env.JAWSDB_URL);
-} else {
-  sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PW, {
-    host: 'localhost',
-    dialect: 'mysql',
-    port: 3306
-  });
-}
-
-
-module.exports = sequelize;
+module.exports = router;
